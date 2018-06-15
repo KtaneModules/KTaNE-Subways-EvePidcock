@@ -1720,7 +1720,7 @@ public class subways : MonoBehaviour {
                             split[i] = Regex.Replace(split[i], "-", "");
                             var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
                             //At least require the first word to match completely
-                            if (split2[0] == nameS[0] && name.StartsWith(split[i])) selectables.Add(stopBtnsNYC[Array.IndexOf(stopNamesNYC, s)]);
+                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i])) selectables.Add(stopBtnsNYC[Array.IndexOf(stopNamesNYC, s)]);
                         }
                         break;
                     case 1:
@@ -1731,7 +1731,7 @@ public class subways : MonoBehaviour {
                             if (split2.Contains("st.")) split[i] = Regex.Replace(split[i], ".", "");
                             split[i] = split[i].Replace("'", "");
                             var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
-                            if (split2[0] == nameS[0] && name.StartsWith(split[i])) selectables.Add(stopBtnsLondon[Array.IndexOf(stopNamesLondon, s)]);
+                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i])) selectables.Add(stopBtnsLondon[Array.IndexOf(stopNamesLondon, s)]);
                         }
                         break;
                     case 2:
@@ -1745,7 +1745,7 @@ public class subways : MonoBehaviour {
                             var name = Regex.Replace(s, "é", "e").Replace("-", " ").ToLowerInvariant();
                             split[i] = Regex.Replace(split[i], "é", "e").Replace("-", " ");
                             var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
-                            if (split2[0] == nameS[0] && name.StartsWith(split[i])) selectables.Add(stopBtnsParis[Array.IndexOf(stopNamesParis, s)]);
+                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i])) selectables.Add(stopBtnsParis[Array.IndexOf(stopNamesParis, s)]);
                         }
                         break;
                 }
