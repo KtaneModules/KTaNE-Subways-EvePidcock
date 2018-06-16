@@ -1662,26 +1662,27 @@ public class subways : MonoBehaviour {
         //This should be accessible for !# set route or !# submit [time], [route] only.
         if (route || submit && command != "submit")
         {
-            //With how the module manages selections, it's best to make sure the map is cleared before each input
-            //Three selections will be chosen and then deactivated to achieve this.
-            var k = new List<KMSelectable>();
-            switch (map)
+            //If stops has already been used, deselect previously selected buttons.
+            //This has to be here, rather than at the beginning, due to the time command
+            if (!stops.All(x => x == 0))
             {
-                case 0:
-                    k.AddRange(new[] { stopBtnsNYC[0], stopBtnsNYC[1], stopBtnsNYC[2] });
-                    break;
-                case 1:
-                    k.AddRange(new[] { stopBtnsLondon[0], stopBtnsLondon[1], stopBtnsLondon[2] });
-                    break;
-                case 2:
-                    k.AddRange(new[] { stopBtnsParis[0], stopBtnsParis[1], stopBtnsParis[2] });
-                    break;
+                switch (map)
+                {
+                    case 0:
+                        selectables.AddRange(new[] { stopBtnsNYC[stops[2]], stopBtnsNYC[stops[1]], stopBtnsNYC[stops[0]] });
+                        break;
+                    case 1:
+                        selectables.AddRange(new[] { stopBtnsLondon[stops[2]], stopBtnsLondon[stops[1]], stopBtnsLondon[stops[0]] });
+                        break;
+                    case 2:
+                        selectables.AddRange(new[] { stopBtnsParis[stops[2]], stopBtnsParis[stops[1]], stopBtnsParis[stops[0]] });
+                        break;
+                }
             }
-            selectables.AddRange(k);
-            k.Reverse();
-            selectables.AddRange(k);
             //resplit command, in case time was also set. Otherwise, ignore this.
             split = command.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
+            //Create a new list for route selectables to check its count after the for statement
+            List<KMSelectable> Set = new List<KMSelectable>(); 
             //Go through the inputs 3 times. One for each stop. Probably best to do all three at once.
             for (int i = 0; i < 3; i++)
             {
@@ -1720,7 +1721,12 @@ public class subways : MonoBehaviour {
                             split[i] = Regex.Replace(split[i], "-", "");
                             var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
                             //At least require the first word to match completely
-                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i])) selectables.Add(stopBtnsNYC[Array.IndexOf(stopNamesNYC, s)]);
+                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i]))
+                            {
+                                //Disallow the same button from being pressed more than once
+                                if (Set.Contains(stopBtnsNYC[Array.IndexOf(stopNamesNYC, s)])) return null;
+                                Set.Add(stopBtnsNYC[Array.IndexOf(stopNamesNYC, s)]);
+                            }
                         }
                         break;
                     case 1:
@@ -1731,7 +1737,11 @@ public class subways : MonoBehaviour {
                             if (split2.Contains("st.")) split[i] = Regex.Replace(split[i], ".", "");
                             split[i] = split[i].Replace("'", "");
                             var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
-                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i])) selectables.Add(stopBtnsLondon[Array.IndexOf(stopNamesLondon, s)]);
+                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i]))
+                            {
+                                if (Set.Contains(stopBtnsLondon[Array.IndexOf(stopNamesLondon, s)])) return null;
+                                Set.Add(stopBtnsLondon[Array.IndexOf(stopNamesLondon, s)]);
+                            }
                         }
                         break;
                     case 2:
@@ -1745,11 +1755,18 @@ public class subways : MonoBehaviour {
                             var name = Regex.Replace(s, "é", "e").Replace("-", " ").ToLowerInvariant();
                             split[i] = Regex.Replace(split[i], "é", "e").Replace("-", " ");
                             var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
-                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i])) selectables.Add(stopBtnsParis[Array.IndexOf(stopNamesParis, s)]);
+                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i]))
+                            {
+                                if (Set.Contains(stopBtnsParis[Array.IndexOf(stopNamesParis, s)])) return null;
+                                Set.Add(stopBtnsParis[Array.IndexOf(stopNamesParis, s)]);
+                            }
                         }
                         break;
                 }
             }
+            //Ignore the command if less than or more than three routes were added
+            if (Set.Count == 3) selectables.AddRange(Set);
+            else return null;
         }
 
         //Add submit if command started with submit
