@@ -1,11 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Linq;
-using Newtonsoft.Json;
 using KMHelper;
 using System;
-using System.Threading;
 using UnityEngine;
 
 public class subways : MonoBehaviour {
@@ -1611,5 +1608,173 @@ public class subways : MonoBehaviour {
                 break;
         }
         return n;
+    }
+
+    private string TwitchHelpMessage = "Set time using !{0} set time 10 pm. Set route using !{0} set route oxford, holborn, green. Alternatively submit all using !{0} submit 10 pm, South Ferry 1, City Hall 4-5-6, Canal St ACE.";
+
+    private KMSelectable[] ProcessTwitchCommand(string command)
+    {
+        List<KMSelectable> selectables = new List<KMSelectable>();
+
+        command = command.ToLowerInvariant();
+        //Each command should start with either set or submit
+        bool set = command.StartsWith("set");
+        bool submit = command.StartsWith("submit");
+        //For easier comparisons, remove submit and set from the input.
+        command = command.Replace("set ", "").Replace("submit ", "");
+        //splice input for time calculations. This will be used for routes later
+        var split = command.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
+        //Make sure that the input matches a format similar to "time 1am" or "12 pm" 
+        var Match = Regex.Match(split[0], @"^(?:time |)(\d{1,2})(?: |)((?:a|p)m)$");
+        //To set the time directly, we'll need to know what is currently present on the module.
+        var screenTime = timeScrn.GetComponentInChildren<TextMesh>().text;
+        var screenAMPM = ampmScrn.GetComponentInChildren<TextMesh>().text;
+
+        if (Match.Success)
+        {
+            //time matches (\d{1,2}) in Match
+            string time = Match.Groups[1].Value;
+            //ampm matches ((?:a|p)m) in Match
+            string ampm = Match.Groups[2].Value;
+            /*Since we are sending the selectable at the end of the TP interaction,
+            we cannot use a while statement to add selectables to the list.
+            So instead, we'll create a new value based on the screen time,
+            and increase that instead.*/
+            var i = int.Parse(screenTime);
+            while (int.Parse(time) != i)
+            {
+                i++;
+                if (i > 12) i = 1;
+                selectables.Add(timeUpBtn);
+            }
+            //Since AMPM only contains two values, a while statement is not necessary.
+            if (ampm != screenAMPM.ToLowerInvariant()) selectables.Add(ampmDownBtn);
+        }
+
+        //Take out the time command for the submit case, so that the route code can be used
+        //for both set and submit
+        if (Match.Success && submit && split.Count() > 1)
+        {
+            command = command.Replace(Match.Value + ", ", "");
+        }
+
+        bool route = command.StartsWith("route");
+        command = command.Replace("route ", "");
+        //This should be accessible for !# set route or !# submit [time], [route] only.
+        if (route || submit && command != "submit")
+        {
+            //If stops has already been used, deselect previously selected buttons.
+            //This has to be here, rather than at the beginning, due to the time command
+            if (!stops.All(x => x == 0))
+            {
+                switch (map)
+                {
+                    case 0:
+                        selectables.AddRange(new[] { stopBtnsNYC[stops[2]], stopBtnsNYC[stops[1]], stopBtnsNYC[stops[0]] });
+                        break;
+                    case 1:
+                        selectables.AddRange(new[] { stopBtnsLondon[stops[2]], stopBtnsLondon[stops[1]], stopBtnsLondon[stops[0]] });
+                        break;
+                    case 2:
+                        selectables.AddRange(new[] { stopBtnsParis[stops[2]], stopBtnsParis[stops[1]], stopBtnsParis[stops[0]] });
+                        break;
+                }
+            }
+            //resplit command, in case time was also set. Otherwise, ignore this.
+            split = command.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
+            //Create a new list for route selectables to check its count after the for statement
+            List<KMSelectable> Set = new List<KMSelectable>(); 
+            //Go through the inputs 3 times. One for each stop. Probably best to do all three at once.
+            for (int i = 0; i < 3; i++)
+            {
+                //Compare the first word of the stop to the one on the module.
+                //Using a split for ease, though only the first one is used.
+                var split2 = split[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
+                //Commands are only valid on the map that is chosen
+                switch (map)
+                {
+                    case 0:
+                        foreach (string s in stopNamesNYC)
+                        {
+                            //Make some inputs unambiguous
+                            switch (split[i])
+                            {
+                                case "canal":
+                                case "canal st":
+                                case "canal street":
+                                case "chambers":
+                                case "chambers st":
+                                case "chambers street":
+                                case "city":
+                                case "city hall":
+                                case "wall":
+                                case "wall st":
+                                case "wall street":
+                                case "rector":
+                                case "rector st":
+                                case "rector street":
+                                case "south":
+                                case "south ferry":
+                                    throw new FormatException(split[i] + " cannot be condensed. Please use the full stop name.");
+                            }
+                            //split the name to compare it with the command split
+                            var name = Regex.Replace(s, "-", "").ToLowerInvariant();
+                            split[i] = Regex.Replace(split[i], "-", "");
+                            var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
+                            //At least require the first word to match completely
+                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i]))
+                            {
+                                //Disallow the same button from being pressed more than once
+                                if (Set.Contains(stopBtnsNYC[Array.IndexOf(stopNamesNYC, s)])) return null;
+                                Set.Add(stopBtnsNYC[Array.IndexOf(stopNamesNYC, s)]);
+                            }
+                        }
+                        break;
+                    case 1:
+                        foreach (string s in stopNamesLondon)
+                        {
+                            //Allow both st. and st inputs.
+                            var name = s.ToLowerInvariant().Replace(".", "").Replace("'", "");
+                            if (split2.Contains("st.")) split[i] = Regex.Replace(split[i], ".", "");
+                            split[i] = split[i].Replace("'", "");
+                            var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
+                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i]))
+                            {
+                                if (Set.Contains(stopBtnsLondon[Array.IndexOf(stopNamesLondon, s)])) return null;
+                                Set.Add(stopBtnsLondon[Array.IndexOf(stopNamesLondon, s)]);
+                            }
+                        }
+                        break;
+                    case 2:
+                        foreach (string s in stopNamesParis)
+                        {
+                            if (split[i] == "pont")
+                            {
+                                throw new FormatException(split[i] + " cannot be condensed. Please use the full stop name.");
+                            }
+                            //é inputs from chat and in the module are replaced with e. The dash from St-Michel is also optional.
+                            var name = Regex.Replace(s, "é", "e").Replace("-", " ").ToLowerInvariant();
+                            split[i] = Regex.Replace(split[i], "é", "e").Replace("-", " ");
+                            var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
+                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i]))
+                            {
+                                if (Set.Contains(stopBtnsParis[Array.IndexOf(stopNamesParis, s)])) return null;
+                                Set.Add(stopBtnsParis[Array.IndexOf(stopNamesParis, s)]);
+                            }
+                        }
+                        break;
+                }
+            }
+            //Ignore the command if less than or more than three routes were added
+            if (Set.Count == 3) selectables.AddRange(Set);
+            else return null;
+        }
+
+        //Add submit if command started with submit
+        if (submit) selectables.Add(submitBtn);
+
+        //If the command didn't start with set or submit, ignore everything.
+        if (!set && !submit) return null;
+        return selectables.ToArray();
     }
 }
