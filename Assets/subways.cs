@@ -1610,7 +1610,7 @@ public class subways : MonoBehaviour {
         return n;
     }
 
-    private string TwitchHelpMessage = "Set time using !{0} set time 10 pm. Set route using !{0} set route oxford, holborn, green. Alternatively submit all using !{0} submit 10 pm, South Ferry 1, City Hall 4-5-6, Canal St ACE.";
+    private string TwitchHelpMessage = "Set time using !{0} set time 10 pm. Set route using !{0} set route oxford, holborn, green. Alternatively submit all using !{0} submit 10 pm, South Ferry 1, City Hall 4-5-6, Canal St ACE. NOTE: If one of the stops is King's Cross St Pancras, type it as Kings Cross St Pancras (without the apostrophe).";
 
     private KMSelectable[] ProcessTwitchCommand(string command)
     {
