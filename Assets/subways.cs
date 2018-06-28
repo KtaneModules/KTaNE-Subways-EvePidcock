@@ -1610,7 +1610,7 @@ public class subways : MonoBehaviour {
         return n;
     }
 
-    private string TwitchHelpMessage = "Set time using !{0} set time 10 pm. Set route using !{0} set route oxford, holborn, green. Alternatively submit all using !{0} submit 10 pm, South Ferry 1, City Hall 4-5-6, Canal St ACE. NOTE: If applicable, remove the apostrophe from 'king's' and the hyphen (make it a space) from 'st-michel'.";
+    private string TwitchHelpMessage = "Set time using !{0} set time 10 pm. Set route using !{0} set route oxford, holborn, green. Alternatively submit all using !{0} submit 10 pm, South Ferry 1, City Hall 4-5-6, Canal St ACE.";
 
     private KMSelectable[] ProcessTwitchCommand(string command)
     {
@@ -1649,13 +1649,10 @@ public class subways : MonoBehaviour {
             }
             //Since AMPM only contains two values, a while statement is not necessary.
             if (ampm != screenAMPM.ToLowerInvariant()) selectables.Add(ampmDownBtn);
-        }
 
-        //Take out the time command for the submit case, so that the route code can be used
-        //for both set and submit
-        if (Match.Success && submit && split.Count() > 1)
-        {
-            command = command.Replace(Match.Value + ", ", "");
+            //Take out the time command for the submit case, so that the route code can be used
+            //for both set and submit
+            if (submit && split.Count() > 1) command = command.Replace(Match.Value + ", ", "");
         }
 
         bool route = command.StartsWith("route");
@@ -1689,6 +1686,7 @@ public class subways : MonoBehaviour {
             {
                 //Compare the first word of the stop to the one on the module.
                 //Using a split for ease, though only the first one is used.
+                split[i] = split[i].Replace("'", "").Replace("’", "").Replace("-", " ").Replace("é", "e").Replace(".","");
                 var split2 = split[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
                 //Commands are only valid on the map that is chosen
                 switch (map)
@@ -1718,11 +1716,10 @@ public class subways : MonoBehaviour {
                                     throw new FormatException(split[i] + " cannot be condensed. Please use the full stop name.");
                             }
                             //split the name to compare it with the command split
-                            var name = Regex.Replace(s, "-", "").ToLowerInvariant();
-                            split[i] = Regex.Replace(split[i], "-", "");
+                            var name = s.Replace("-", "").ToLowerInvariant();
                             var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
                             //At least require the first word to match completely
-                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i]))
+                            if (split2[0].Equals(nameS[0]) && name.Replace(" ", "").StartsWith(split[i].Replace(" ", "")))
                             {
                                 //Disallow the same button from being pressed more than once
                                 if (Set.Contains(stopBtnsNYC[Array.IndexOf(stopNamesNYC, s)])) return null;
@@ -1734,9 +1731,7 @@ public class subways : MonoBehaviour {
                         foreach (string s in stopNamesLondon)
                         {
                             //Allow both st. and st inputs.
-                            var name = s.ToLowerInvariant().Replace(".", "").Replace("'", "");
-                            if (split2.Contains("st.")) split[i] = Regex.Replace(split[i], ".", "");
-                            split[i] = split[i].Replace("'", "");
+                            var name = s.ToLowerInvariant().Replace("'","").Replace(".","");
                             var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
                             if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i]))
                             {
@@ -1754,7 +1749,6 @@ public class subways : MonoBehaviour {
                             }
                             //é inputs from chat and in the module are replaced with e. The dash from St-Michel is also optional.
                             var name = Regex.Replace(s, "é", "e").Replace("-", " ").ToLowerInvariant();
-                            split[i] = Regex.Replace(split[i], "é", "e").Replace("-", " ");
                             var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
                             if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i]))
                             {
