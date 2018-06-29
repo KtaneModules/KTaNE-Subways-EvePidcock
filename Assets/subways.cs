@@ -1612,7 +1612,7 @@ public class subways : MonoBehaviour {
 
     private string TwitchHelpMessage = "Set time using !{0} set time 10 pm. Set route using !{0} set route oxford, holborn, green. Alternatively submit all using !{0} submit 10 pm, South Ferry 1, City Hall 4-5-6, Canal St ACE.";
 
-    private KMSelectable[] ProcessTwitchCommand(string command)
+    private List<KMSelectable> ProcessTwitchCommand(string command)
     {
         List<KMSelectable> selectables = new List<KMSelectable>();
 
@@ -1620,6 +1620,8 @@ public class subways : MonoBehaviour {
         //Each command should start with either set or submit
         bool set = command.StartsWith("set");
         bool submit = command.StartsWith("submit");
+        //If the command didn't start with set or submit, ignore everything.
+        if (!set && !submit) return null;
         //For easier comparisons, remove submit and set from the input.
         command = command.Replace("set ", "").Replace("submit ", "");
         //splice input for time calculations. This will be used for routes later
@@ -1662,20 +1664,10 @@ public class subways : MonoBehaviour {
         {
             //If stops has already been used, deselect previously selected buttons.
             //This has to be here, rather than at the beginning, due to the time command
+            var stopBtns = (new[] { stopBtnsNYC, stopBtnsLondon, stopBtnsParis })[map];
             if (!stops.All(x => x == 0))
             {
-                switch (map)
-                {
-                    case 0:
-                        selectables.AddRange(new[] { stopBtnsNYC[stops[2]], stopBtnsNYC[stops[1]], stopBtnsNYC[stops[0]] });
-                        break;
-                    case 1:
-                        selectables.AddRange(new[] { stopBtnsLondon[stops[2]], stopBtnsLondon[stops[1]], stopBtnsLondon[stops[0]] });
-                        break;
-                    case 2:
-                        selectables.AddRange(new[] { stopBtnsParis[stops[2]], stopBtnsParis[stops[1]], stopBtnsParis[stops[0]] });
-                        break;
-                }
+                selectables.AddRange(new[] { stopBtns[stops[2]], stopBtns[stops[1]], stopBtns[stops[0]] });
             }
             //resplit command, in case time was also set. Otherwise, ignore this.
             split = command.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
@@ -1686,77 +1678,27 @@ public class subways : MonoBehaviour {
             {
                 //Compare the first word of the stop to the one on the module.
                 //Using a split for ease, though only the first one is used.
-                split[i] = split[i].Replace("'", "").Replace("’", "").Replace("-", " ").Replace("é", "e").Replace(".","");
+                split[i] = split[i].Replace("'", "").Replace("’", "").Replace("-"," ").Replace("é", "e").Replace(".","");
                 var split2 = split[i].Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
                 //Commands are only valid on the map that is chosen
-                switch (map)
+
+                var stopNames = (new[] { stopNamesNYC, stopNamesLondon, stopNamesParis })[map];
+                //Make some inputs unambiguous
+                var catches = new[] { "canal", "canal st", "canal street", "chambers", "chambers st", "city", "city hall", "wall", "wall st", "wall street", "rector", "rector st", "rector street", "south", "south ferry", "pont" };
+
+                foreach (string s in stopNames)
                 {
-                    case 0:
-                        foreach (string s in stopNamesNYC)
-                        {
-                            //Make some inputs unambiguous
-                            switch (split[i])
-                            {
-                                case "canal":
-                                case "canal st":
-                                case "canal street":
-                                case "chambers":
-                                case "chambers st":
-                                case "chambers street":
-                                case "city":
-                                case "city hall":
-                                case "wall":
-                                case "wall st":
-                                case "wall street":
-                                case "rector":
-                                case "rector st":
-                                case "rector street":
-                                case "south":
-                                case "south ferry":
-                                    throw new FormatException(split[i] + " cannot be condensed. Please use the full stop name.");
-                            }
-                            //split the name to compare it with the command split
-                            var name = s.Replace("-", "").ToLowerInvariant();
-                            var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
-                            //At least require the first word to match completely
-                            if (split2[0].Equals(nameS[0]) && name.Replace(" ", "").StartsWith(split[i].Replace(" ", "")))
-                            {
-                                //Disallow the same button from being pressed more than once
-                                if (Set.Contains(stopBtnsNYC[Array.IndexOf(stopNamesNYC, s)])) return null;
-                                Set.Add(stopBtnsNYC[Array.IndexOf(stopNamesNYC, s)]);
-                            }
-                        }
-                        break;
-                    case 1:
-                        foreach (string s in stopNamesLondon)
-                        {
-                            //Allow both st. and st inputs.
-                            var name = s.ToLowerInvariant().Replace("'","").Replace(".","");
-                            var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
-                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i]))
-                            {
-                                if (Set.Contains(stopBtnsLondon[Array.IndexOf(stopNamesLondon, s)])) return null;
-                                Set.Add(stopBtnsLondon[Array.IndexOf(stopNamesLondon, s)]);
-                            }
-                        }
-                        break;
-                    case 2:
-                        foreach (string s in stopNamesParis)
-                        {
-                            if (split[i] == "pont")
-                            {
-                                throw new FormatException(split[i] + " cannot be condensed. Please use the full stop name.");
-                            }
-                            //é inputs from chat and in the module are replaced with e. The dash from St-Michel is also optional.
-                            var name = Regex.Replace(s, "é", "e").Replace("-", " ").ToLowerInvariant();
-                            var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
-                            if (split2[0].Equals(nameS[0]) && name.StartsWith(split[i]))
-                            {
-                                if (Set.Contains(stopBtnsParis[Array.IndexOf(stopNamesParis, s)])) return null;
-                                Set.Add(stopBtnsParis[Array.IndexOf(stopNamesParis, s)]);
-                            }
-                        }
-                        break;
+                    if (catches.Contains(split[i])) throw new FormatException(split[i] + " cannot be condensed. Please use the full stop name.");
+                    var name = s.Replace("-", " ").Replace("'", "").Replace(".", "").Replace("é", "e").ToLowerInvariant();
+                    //split the name to compare it with the command split
+                    var nameS = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
+                    //At least require the first word to match completely
+                    if (split2[0].Equals(nameS[0]) && name.Replace(" ", "").StartsWith(split[i].Replace(" ", "")))
+                    {
+                        //Disallow the same button from being pressed more than once
+                        if (Set.Contains(stopBtns[Array.IndexOf(stopNames, s)])) return null;
+                        Set.Add(stopBtns[Array.IndexOf(stopNames, s)]);
+                    }
                 }
             }
             //Ignore the command if less than or more than three routes were added
@@ -1767,8 +1709,6 @@ public class subways : MonoBehaviour {
         //Add submit if command started with submit
         if (submit) selectables.Add(submitBtn);
 
-        //If the command didn't start with set or submit, ignore everything.
-        if (!set && !submit) return null;
-        return selectables.ToArray();
+        return selectables;
     }
 }
