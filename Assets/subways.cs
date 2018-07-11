@@ -999,17 +999,30 @@ public class subways : MonoBehaviour {
                 break;
         }
         return answer;
-    } 
+    }
+
+    bool pm = false;
 
     int batteryTime()
     {
         int bat = info.GetBatteryCount();
+        pm = false;
         if(bat == 0)
         {
             return 12;
-        } else if(bat > 12)
+        }else if(bat == 12)
         {
-            return (bat - 12);
+            pm = true;
+            return 12;
+        }
+        else if(bat > 12)
+        {
+            while(bat > 12)
+            {
+                bat -= 12;
+                pm = !pm;
+            }
+            return bat;
         } else
         {
             return bat;
@@ -1018,8 +1031,7 @@ public class subways : MonoBehaviour {
 
     bool batteryAMPM()
     {
-        int bat = info.GetBatteryCount();
-        return (bat < 12);
+        return !pm;
     }
 
     int getCorrectTime(int cityMap, int nameScrn, int dayOWeek)
