@@ -1688,6 +1688,9 @@ public class subways : MonoBehaviour {
             //Go through the inputs 3 times. One for each stop. Probably best to do all three at once.
             for (int i = 0; i < 3; i++)
             {
+                //While we want three inputs here, some people may accidentally [or purposely] type in less than three
+                //This will obviously return an IndexOutOfRange exception, so let's break if split's count isn't long enough to match the for statement.
+                if (split.Count() < i + 1) break;
                 //Compare the first word of the stop to the one on the module.
                 //Using a split for ease, though only the first one is used.
                 split[i] = split[i].Replace("'", "").Replace("’", "").Replace("-"," ").Replace("é", "e").Replace(".","");
