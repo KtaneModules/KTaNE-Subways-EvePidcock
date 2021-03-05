@@ -1639,7 +1639,7 @@ public class subways : MonoBehaviour {
         //splice input for time calculations. This will be used for routes later
         var split = command.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray();
         //Make sure that the input matches a format similar to "time 1am" or "12 pm" 
-        var Match = Regex.Match(split[0], @"^(?:time |)(\d{1,2})(?: |)((?:a|p)m)$");
+        var Match = Regex.Match(split[0], @"^(?:time |)([1-9]|1[0-2])(?: |)((?:a|p)m)$");
         //To set the time directly, we'll need to know what is currently present on the module.
         var screenTime = timeScrn.GetComponentInChildren<TextMesh>().text;
         var screenAMPM = ampmScrn.GetComponentInChildren<TextMesh>().text;
