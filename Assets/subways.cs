@@ -519,7 +519,7 @@ public class subways : MonoBehaviour {
                         break;
                 }
             }
-            Debug.LogFormat("[Subways #{0}] If you feel that this strike is an error, please contact AAces as soon as possible so we can get this error sorted out. Have a copy of this log file handy. Discord: AAces#0908", _moduleId);
+            Debug.LogFormat("[Subways #{0}] If you feel that this strike is an error, please contact AAces as soon as possible so we can get this error sorted out. Have a copy of this log file handy. Discord: AAces#2652", _moduleId);
         }
     }
 

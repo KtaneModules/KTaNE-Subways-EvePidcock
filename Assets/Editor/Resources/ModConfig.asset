@@ -13,10 +13,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: subways
   title: Subways
-  description: "Help a lost commuter find their way.\r\n\r\nManual link: https://ktane.timwi.de/HTML/Subways.html\r\nPDF:\r\nhttps://ktane.timwi.de/PDF/Subways.pdf\r\n\r\nModule
-    ID: subways\r\n\r\nGithub link: https://github.com/AAces/KTaNE-Subways\r\n\r\nThe
-    camera zoom mod is suggested because the subway maps include fine detail.\r\n\r\nModule
-    idea and creation: AAces\nTwitch Plays support: Riverbui"
-  version: 1.0
+  description: "Help a lost commuter find their way.\r\n\r\nManual link: https://ktane.timwi.de/HTML/Subways.html\r\nPDF:\r
+    https://ktane.timwi.de/PDF/Subways.pdf\r\n\r\nModule ID: subways\r\n\r\nGithub
+    link: https://github.com/AAces/KTaNE-Subways\r\n\r\nThe camera zoom mod is strongly
+    suggested because the subway maps include fine detail.\r\n\r\nModule idea and
+    creation: AAces\nTwitch Plays support: Riverbui & Marksam"
+  version: 1.1
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 67c4dadb472c9624688e7f32401a36b1, type: 3}
